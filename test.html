@@ -1,0 +1,83 @@
+        <!DOCTYPE html>
+        <html lang="fr">
+        <head>
+          <meta charset="UTF-8" />
+          <title>Créer une Tâche</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+            }
+            li {
+              margin: 5px 0;
+            }
+            button.delete-btn {
+              margin-left: 10px;
+              cursor: pointer;
+              background-color: transparent;
+              border: none;
+              font-size: 16px;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Ajouter une tâche</h1>
+
+          <form id="taskForm">
+            <input type="text" id="title" placeholder="Titre de la tâche" required />
+            <button type="submit">Ajouter</button>
+          </form>
+
+          <ul id="taskList"></ul>
+
+          <script>
+            // Fonction pour charger les tâches
+            async function chargerTaches() {
+              try {
+                const response = await fetch('/api/tasks');
+                const taches = await response.json();
+
+                const liste = document.getElementById('taskList');
+                liste.innerHTML = '';
+
+                taches.forEach(tache => {
+                  const li = document.createElement('li');
+                  li.textContent = tache.title;
+
+                  const btn = document.createElement('button');
+                  btn.innerHTML = '🗑️';
+                  btn.className = 'delete-btn';
+                  btn.onclick = async () => {
+                    await fetch('/api/tasks/' + tache._id, { method: 'DELETE' });
+                    chargerTaches();
+                  };
+
+                  li.appendChild(btn);
+                  liste.appendChild(li);
+                });
+              } catch (err) {
+                alert("Erreur de chargement des tâches");
+              }
+            }
+
+            // Envoi du formulaire
+            document.getElementById('taskForm').addEventListener('submit', async (e) => {
+              e.preventDefault();
+              const title = document.getElementById('title').value;
+
+              const response = await fetch('/api/tasks', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+              });
+
+              const data = await response.json();
+              alert("Tâche ajoutée : " + data.title);
+              document.getElementById('title').value = '';
+              chargerTaches();
+            });
+
+            // Chargement initial
+            window.onload = chargerTaches;
+          </script>
+        </body>
+        </html>
